@@ -1,0 +1,59 @@
+#define BLYNK_TEMPLATE_ID "TMPL6kbGOx8q6"
+#define BLYNK_TEMPLATE_NAME "Air monitoring system"
+#define BLYNK_AUTH_TOKEN "qJpNVg5rkgjsQq9a9NxWqm1z46vD1n9D"
+
+#include "DHT.h"
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+
+#define DHTPIN 18 // Digital pin connected to the DHT sensor
+#define DHTTYPE DHT22 // DHT 22
+
+
+
+#define VIRTUAL_PIN_TEMP V6
+#define VIRTUAL_PIN_HUMIDITY V5
+
+// Define the WiFi network SSID and password.
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  dht.begin(); // Initialize the DHT sensor
+
+  // Connect to the WiFi network.
+  WiFi.begin(ssid, password);
+  // Wait until the connection is established.
+  while (WiFi.status() != WL_CONNECTED) {
+    // Print a message to the serial port.
+    Serial.println("Connecting to WiFi...");
+    // Wait 500 milliseconds before checking again.
+    delay(500);
+  }
+  Serial.println("WiFi connected");
+
+  Blynk.begin(auth, ssid, password);
+}
+
+void loop() {
+  Blynk.run();
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+  // Print the humidity and temperature to the serial port
+  Serial.printf("Humidity: %.2f %, Temperature: %.2f °C\n", h, t);
+  delay(200);
+
+  Blynk.virtualWrite(VIRTUAL_PIN_TEMP, t);
+  Blynk.virtualWrite(VIRTUAL_PIN_HUMIDITY, h);
+}
